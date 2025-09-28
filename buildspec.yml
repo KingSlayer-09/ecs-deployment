@@ -1,23 +1,30 @@
 version: 0.2
-environment:
+
+env:
   variables:
-    AWS_REGION: "eu-west-1"
-    ECR_REPO_NAME: "my-angular-app"
+    ECR_REPO_NAME: my-angular-app   # static, available everywhere
+  exported-variables:
+    - ECR_URI
+    - REPO_URI
+    - IMAGE_TAG
+
 phases:
   pre_build:
     commands:
-    # Log in to Docker Hub
-      - echo ${DOCKERHUB_TOKEN} | docker login -u ${DOCKERHUB_USERNAME} --password-stdin
-
-    #ECR login
-      - ECR_MAIN_URI="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-      - aws ecr get-login-password --region ${AWS_REGION} | docker login -u AWS --password-stdin ${ECR_MAIN_URI}
-      - REPOSITORY_URI="${ECR_MAIN_URI}/${ECR_REPO_NAME}:latest"
+      - set -euxo pipefail
+      - ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+      - REGION="${AWS_REGION:-${AWS_DEFAULT_REGION}}"
+      - export ECR_URI="${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com"
+      - export REPO_URI="${ECR_URI}/${ECR_REPO_NAME}"
+      - export IMAGE_TAG=${CODEBUILD_RESOLVED_SOURCE_VERSION:0:7}
+      - aws ecr get-login-password --region "$REGION" | docker login -u AWS --password-stdin "$ECR_URI"
   build:
     commands:
-      - docker build -t my-angular-app:latest .
-
+      - docker build -t "${ECR_REPO_NAME}:latest" .
   post_build:
     commands:
-      - docker tag my-angular-app:latest ${REPOSITORY_URI}
-      - docker push ${REPOSITORY_URI}
+      - set -euxo pipefail
+      - docker tag "${ECR_REPO_NAME}:latest" "${REPO_URI}:latest"
+      - docker tag "${ECR_REPO_NAME}:latest" "${REPO_URI}:${IMAGE_TAG}"
+      - docker push "${REPO_URI}:latest"
+      - docker push "${REPO_URI}:${IMAGE_TAG}"
