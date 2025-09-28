@@ -15,9 +15,9 @@ phases:
       - REPOSITORY_URI="${ECR_MAIN_URI}/${ECR_REPO_NAME}:latest"
   build:
     commands:
-      - docker build -t ${ECR_REPO_NAME}:latest .
+      - docker build -t my-angular-app:latest .
 
   post_build:
     commands:
-      - docker tag ${ECR_REPO_NAME}:latest ${REPOSITORY_URI}
+      - docker tag my-angular-app:latest ${REPOSITORY_URI}
       - docker push ${REPOSITORY_URI}
