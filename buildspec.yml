@@ -28,3 +28,11 @@ phases:
       - docker tag "${ECR_REPO_NAME}:latest" "${REPO_URI}:${IMAGE_TAG}"
       - docker push "${REPO_URI}:latest"
       - docker push "${REPO_URI}:${IMAGE_TAG}"
+
+      # Generate image definition file for ECS.
+      - printf '[{"name":"my-angular-app","imageUri":"%s"}]' "${ECR_REPO_NAME}" > imagedefinitions.json
+      - cat imagedefinitions.json
+
+artifacts:
+  files:
+    - imagedefinitions.json
