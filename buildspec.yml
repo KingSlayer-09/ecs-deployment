@@ -24,8 +24,7 @@ phases:
   post_build:
     commands:
       - set -euxo pipefail
-      - docker tag "${ECR_REPO_NAME}:latest" "${REPO_URI}:latest"
-      - docker tag "${ECR_REPO_NAME}:latest" "${REPO_URI}:${IMAGE_TAG}"
+      - docker tag "${ECR_REPO_NAME}:latest"
       - docker push "${REPO_URI}:latest"
       - docker push "${REPO_URI}:${IMAGE_TAG}"
 
